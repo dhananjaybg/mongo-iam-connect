@@ -49,7 +49,6 @@ public class StsTest{
             System.out.println("SECRET_ACCESS_KEY ===> " + temporaryCredentials.getSecretAccessKey());
             System.out.println("SESSION_TOKEN ===>" + temporaryCredentials.getSessionToken());
 
-            //String connectionString = "mongodb+srv://username:paas@democluster.c1xrj.mongodb.net/?retryWrites=true&w=majority&appName=DemoCluster";
             String connectionString = "mongodb+srv://"+temporaryCredentials.getAccessKeyId()+":"+temporaryCredentials.getSecretAccessKey()+"@democluster.c1xrj.mongodb.net/?authSource=%24external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority&authMechanismProperties=AWS_SESSION_TOKEN:"+temporaryCredentials.getSessionToken()+"&appName=DemoCluster";
 
             System.out.println("connectionString ===> " + connectionString);

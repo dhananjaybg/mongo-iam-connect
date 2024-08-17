@@ -16,6 +16,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
+//message added
 
 public class StsTest{
         static Credentials get_creds( String roleARN ){

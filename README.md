@@ -1,6 +1,13 @@
 # mongo-iam-connect
 use IAM user and role to connect to MongoDB Atlas
 
+## create IAM USER
+
+## Get IAM User Key 
+## create IAM ROLE
+## trust IAM Role with this specific user 
+## Let the IAM User Assume the role
+
 
 
 # references

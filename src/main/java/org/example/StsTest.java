@@ -66,7 +66,7 @@ public class StsTest{
         }
         public static void main(String[] args)
         {
-            String roleARN = "arn:aws:iam::979559056307:role/dev_mdb_role";
+            String roleARN = "arn:aws:iam::XXXXXXX:role/dev_mdb_role";
             Credentials temporaryCredentials = get_creds(roleARN);
             //fetch_roles(temporaryCredentials);
             boolean flg = connect_mongo(temporaryCredentials);

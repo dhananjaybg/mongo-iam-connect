@@ -14,49 +14,40 @@ import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.MongoCredential;
 import org.bson.Document;
-
-//message added
 
 public class StsTest{
         static Credentials get_creds( String roleARN ){
             String roleSessionName = "SESSION_X";
-
             AWSSecurityTokenService stsClient = AWSSecurityTokenServiceClientBuilder.standard().build();
-            AssumeRoleRequest roleRequest = new AssumeRoleRequest().withRoleArn(roleARN).withRoleSessionName(roleSessionName).withDurationSeconds (3600);
-
+            // must be 900+
+            AssumeRoleRequest roleRequest = new AssumeRoleRequest().withRoleArn(roleARN).withRoleSessionName(roleSessionName).withDurationSeconds (900);
             AssumeRoleResult assumeResult = stsClient.assumeRole(roleRequest) ;
-            Credentials temporaryCredentials = assumeResult.getCredentials();
-
-            System.out.println("ACCESS_KEY_ID ===>" + temporaryCredentials.getAccessKeyId());
-            System.out.println("SECRET_ACCESS_KEY ===> " + temporaryCredentials.getSecretAccessKey());
-            System.out.println("SESSION_TOKEN ===>" + temporaryCredentials.getSessionToken());
-
-            return temporaryCredentials;
+            return  assumeResult.getCredentials();
         }
 
         static void fetch_roles(Credentials temporaryCredentials){
             AWSCredentials credentials = new BasicSessionCredentials(temporaryCredentials.getAccessKeyId(), temporaryCredentials.getSecretAccessKey(), temporaryCredentials.getSessionToken());
             AWSCredentialsProvider credProvider = new AWSStaticCredentialsProvider(credentials);
             AmazonIdentityManagement client = AmazonIdentityManagementClientBuilder.standard().withCredentials(credProvider).build();
-            System.out.println();
-            System.out.println("********LIST-ROLES********************");
+
+            System.out.println("\n********LIST-ROLES********************");
             client.listRoles().getRoles().forEach(r -> System.out.println(r.getArn()));
         }
         static boolean connect_mongo(Credentials temporaryCredentials){
-            System.out.println("futire stib code ");
-            System.out.println("ACCESS_KEY_ID ===>" + temporaryCredentials.getAccessKeyId());
-            System.out.println("SECRET_ACCESS_KEY ===> " + temporaryCredentials.getSecretAccessKey());
-            System.out.println("SESSION_TOKEN ===>" + temporaryCredentials.getSessionToken());
+            String ACCESS_KEY_ID = temporaryCredentials.getAccessKeyId();
+            String SECRET_ACCESS_KEY = temporaryCredentials.getSecretAccessKey();
+            String SESSION_TOKEN = temporaryCredentials.getSessionToken();
 
-            String connectionString = "mongodb+srv://"+temporaryCredentials.getAccessKeyId()+":"+temporaryCredentials.getSecretAccessKey()+"@democluster.c1xrj.mongodb.net/?authSource=%24external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority&authMechanismProperties=AWS_SESSION_TOKEN:"+temporaryCredentials.getSessionToken()+"&appName=DemoCluster";
-
-            System.out.println("connectionString ===> " + connectionString);
+            MongoCredential credential = MongoCredential.createAwsCredential(ACCESS_KEY_ID, SECRET_ACCESS_KEY.toCharArray()).withMechanismProperty("AWS_SESSION_TOKEN", SESSION_TOKEN);
+            String connectionString = "mongodb+srv://democluster.c1xrj.mongodb.net/?" +
+                    "authSource=external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority&appName=DemoCluster";
 
             MongoClientSettings settings = MongoClientSettings.builder()
                     .applyConnectionString(new ConnectionString(connectionString))
+                    .credential(credential)
                     .build();
-            System.out.println("settings ===> " + settings);
             // Create a new client and connect to the server
             try (MongoClient mongoClient = MongoClients.create(settings)) {
                 try {
@@ -73,7 +64,6 @@ public class StsTest{
             return false;
 
         }
-
         public static void main(String[] args)
         {
             String roleARN = "arn:aws:iam::979559056307:role/dev_mdb_role";

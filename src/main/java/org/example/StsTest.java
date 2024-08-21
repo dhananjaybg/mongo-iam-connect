@@ -20,41 +20,26 @@ import org.bson.Document;
 public class StsTest{
         static private MongoClient mongoClient = null;
 
-        static Credentials get_creds( String roleARN ){
+        static MongoClient connect_mongo(String roleARN,String connectionString,int refresh_duration){
+
             String roleSessionName = "SESSION_X";
             AWSSecurityTokenService stsClient = AWSSecurityTokenServiceClientBuilder.standard().build();
-            int duration = Integer.valueOf ( System.getenv("DURATION"));
-            // must be 900+
-            AssumeRoleRequest roleRequest = new AssumeRoleRequest().withRoleArn(roleARN).withRoleSessionName(roleSessionName).withDurationSeconds (duration);
+            AssumeRoleRequest roleRequest = new AssumeRoleRequest().withRoleArn(roleARN).withRoleSessionName(roleSessionName).withDurationSeconds (refresh_duration);
             AssumeRoleResult assumeResult = stsClient.assumeRole(roleRequest) ;
-            return  assumeResult.getCredentials();
-        }
+            Credentials creds = assumeResult.getCredentials();
 
-        static void fetch_roles(Credentials temporaryCredentials){
-            AWSCredentials credentials = new BasicSessionCredentials(temporaryCredentials.getAccessKeyId(), temporaryCredentials.getSecretAccessKey(), temporaryCredentials.getSessionToken());
-            AWSCredentialsProvider credProvider = new AWSStaticCredentialsProvider(credentials);
-            AmazonIdentityManagement client = AmazonIdentityManagementClientBuilder.standard().withCredentials(credProvider).build();
-
-            System.out.println("\n********LIST-ROLES********************");
-            client.listRoles().getRoles().forEach(r -> System.out.println(r.getArn()));
-        }
-
-        static MongoClient connect_mongo(Credentials temporaryCredentials){
-            String ACCESS_KEY_ID = temporaryCredentials.getAccessKeyId();
-            String SECRET_ACCESS_KEY = temporaryCredentials.getSecretAccessKey();
-            String SESSION_TOKEN = temporaryCredentials.getSessionToken();
+            String ACCESS_KEY_ID = creds.getAccessKeyId();
+            String SECRET_ACCESS_KEY = creds.getSecretAccessKey();
+            String SESSION_TOKEN = creds.getSessionToken();
 
 
             MongoCredential credential = MongoCredential.createAwsCredential(ACCESS_KEY_ID, SECRET_ACCESS_KEY.toCharArray()).withMechanismProperty("AWS_SESSION_TOKEN", SESSION_TOKEN);
-            //String connectionString = "mongodb+srv://democluster.c1xrj.mongodb.net/?authSource=external&authMechanism=MONGODB-AWS&retryWrites=true&w=majority&appName=DemoCluster";
-            String connectionString = System.getenv("ATLAS_URI");;
+
 
             MongoClientSettings settings = MongoClientSettings.builder()
                     .applyConnectionString(new ConnectionString(connectionString))
                     .credential(credential)
                     .build();
-
-
             try {
                 mongoClient = MongoClients.create(settings);
             } catch (MongoException me) {
@@ -74,23 +59,24 @@ public class StsTest{
 
             return mongoClient;
         }
+
         public String fetch()
         {
             String out_str ="";
 
             String roleARN = System.getenv("ROLE_ARN");
-            Credentials temporaryCredentials = get_creds(roleARN);
-            //fetch_roles(temporaryCredentials);
-            mongoClient = connect_mongo(temporaryCredentials);
+            String connectionString = System.getenv("ATLAS_URI");
+            int duration = Integer.valueOf(System.getenv("DURATION"));
+
+            mongoClient = connect_mongo(roleARN,connectionString,duration);
 
             if (mongoClient != null) {
                 MongoDatabase database = mongoClient.getDatabase("test");
                 for (String name : database.listCollectionNames()) {
-                    //System.out.println(name);
                     out_str += name + "\n";
                 }
 
             }
-            return "market_here : "+out_str;
+            return "market_here_aa : "+out_str;
         }
 }

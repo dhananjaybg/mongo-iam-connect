@@ -1,7 +1,4 @@
 package org.example;
-import com.amazonaws.auth.*;
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.AssumeRoleRequest;
@@ -60,23 +57,21 @@ public class StsTest{
             return mongoClient;
         }
 
-        public String fetch()
-        {
+        public String fetch() {
             String out_str ="";
-
             String roleARN = System.getenv("ROLE_ARN");
             String connectionString = System.getenv("ATLAS_URI");
-            int duration = Integer.valueOf(System.getenv("DURATION"));
+            int duration = Integer.parseInt(System.getenv("DURATION"));
 
             mongoClient = connect_mongo(roleARN,connectionString,duration);
 
             if (mongoClient != null) {
                 MongoDatabase database = mongoClient.getDatabase("test");
                 for (String name : database.listCollectionNames()) {
-                    out_str += name + "\n";
+                    out_str = out_str + name + "\n";
                 }
 
             }
-            return "market_here_aa : "+out_str;
+            return out_str;
         }
 }
